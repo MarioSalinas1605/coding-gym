@@ -1,4 +1,4 @@
-# Programming challenges
+# coding-gym
 
 This repo holds solutions to **pure-logic** programming challenges from LeetCode, Exercism and GreatFrontEnd (algorithms, data structures, JS utility functions — no UI, DOM, React or CSS).
 
@@ -6,18 +6,20 @@ This repo holds solutions to **pure-logic** programming challenges from LeetCode
 
 - `src/<platform>/<slug>/` — one folder per challenge, `platform` ∈ `leetcode | exercism | greatfrontend`
   - `README.md` — link, problem statement, notes, time/space complexity
-  - `solution.ts` — exported solution function(s)
-  - `solution.test.ts` — `bun:test` cases
+  - `solution.js` — exported solution function(s)
+  - `solution.test.js` — `bun:test` cases
+- Solutions are **JavaScript by default**; TypeScript is opt-in per challenge (`solution.ts` / `solution.test.ts`).
 - LeetCode slugs are zero-padded with the problem number: `0001-two-sum`. Others are kebab-case: `hamming`, `debounce`.
-- Scaffold new challenges with `bun new <platform> "<name>" [url]` (see `scripts/new.ts`); don't hand-create the folder.
+- New challenges are scaffolded with `bun new`, an interactive prompt (see `scripts/new.ts`). It needs a terminal, so ask the user to run it rather than running it yourself or hand-creating the folder.
 
 ## Working on challenges
 
 - The user is practicing. When they ask for help, hints or a review on an exercise, use the `tutor` skill and don't write the solution for them unless they explicitly ask.
-- Code is plain TypeScript with strict mode and `noUncheckedIndexedAccess` — handle `undefined` from index access explicitly.
+- Match the challenge's language: don't convert a JS solution to TS (or vice versa) unless asked.
+- TS solutions use strict mode and `noUncheckedIndexedAccess` — handle `undefined` from index access explicitly. JS files aren't type-checked.
 - Keep solutions dependency-free (standard library only), as on the platforms.
 - Run a single challenge's tests with `bun test src/<platform>/<slug>`.
-- Lint/format with Biome: `bun run format:fix`. Type-check with `bun run typecheck`.
+- Lint/format with Biome: `bun run format:fix`. Type-check TS solutions with `bun run typecheck`.
 
 ## Commits
 
@@ -32,7 +34,7 @@ Default to Bun instead of Node.js.
 - `bun install` / `bun run <script>` / `bunx <pkg>` instead of npm/yarn/pnpm/npx
 - Prefer `Bun.file` / `Bun.write` over `node:fs`
 
-```ts#solution.test.ts
+```js#solution.test.js
 import { describe, expect, test } from "bun:test";
 import { twoSum } from "./solution";
 

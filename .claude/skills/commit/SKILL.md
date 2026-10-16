@@ -24,7 +24,7 @@ chore: add typecheck script
 2. Group the changes. One commit per challenge is the rule: if the diff touches several challenges, or mixes a challenge with tooling, propose separate commits and ask before splitting.
 3. Pick the message:
    - **Scope** = the platform folder under `src/` (`leetcode`, `exercism`, `greatfrontend`). Omit it for repo-wide/tooling changes.
-   - **Type**: new challenge folder → `feat`; changed `solution.ts` of an existing challenge → `refactor` (or `fix` if tests were failing / the solution was wrong); only `*.test.ts` → `test`; only `README.md` notes → `docs`; anything outside `src/` → `chore` (tooling, config, scripts).
+   - **Type**: new challenge folder → `feat`; changed `solution.js`/`.ts` of an existing challenge → `refactor` (or `fix` if tests were failing / the solution was wrong); only `solution.test.*` → `test`; only `README.md` notes → `docs`; anything outside `src/` → `chore` (tooling, config, scripts).
    - **Subject**: imperative, lowercase, no trailing period, ≤ 72 chars, naming the challenge slug (e.g. `solve 0001 two-sum`).
    - Add a short body only when it adds something (approach, complexity change).
 4. Before committing a solution, run `bun test <challenge dir>` and report the result. Don't block on failing tests if the user wants to commit work in progress, but mention it.
