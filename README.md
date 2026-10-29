@@ -2,6 +2,10 @@
 
 Solutions to pure-logic programming challenges from LeetCode, Exercism and GreatFrontEnd, written in JavaScript (TypeScript optional) and tested with Bun.
 
+## Requirements
+
+- [Bun](https://bun.sh) 1.3+ — or [Devbox](https://www.jetify.com/devbox), which provides it via `devbox shell`
+
 ## Setup
 
 ```bash
