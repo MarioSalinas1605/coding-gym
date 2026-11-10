@@ -1,0 +1,45 @@
+# Classnames
+
+https://www.greatfrontend.com/interviews/study/gfe75/questions/javascript/classnames?qns_context=76e9fef2-e096-47b0-a574-4af9fc10d5f1
+
+## Problem
+
+[`classnames`](https://github.com/JedWatson/classnames) is a commonly used utility in modern frontend applications to conditionally join CSS class names together. If you've written React applications, you likely have used a similar library.
+
+Implement the `classnames` function.
+
+### Examples
+
+```js
+classNames('foo', 'bar'); // 'foo bar'classNames('foo', { bar: true }); // 'foo bar'classNames({ 'foo-bar': true }); // 'foo-bar'classNames({ 'foo-bar': false }); // ''classNames({ foo: true }, { bar: true }); // 'foo bar'classNames({ foo: true, bar: true }); // 'foo bar'classNames({ foo: true, bar: false, qux: true }); // 'foo qux'
+```
+
+Arrays will be recursively flattened as per the rules above.
+
+```js
+classNames('a', ['b', { c: true, d: false }]); // 'a b c'
+```
+
+Values can be mixed.
+
+```js
+classNames(  'foo',  {    bar: true,    duck: false,  },  'baz',  { quux: true },); // 'foo bar baz quux'
+```
+
+Falsy values are ignored.
+
+```js
+classNames(null, false, 'bar', undefined, { baz: null }, ''); // 'bar'
+```
+
+In addition, the returned string should not have any leading or trailing whitespace.
+
+### Resources
+
+- [`classnames` library on GitHub](https://github.com/JedWatson/classnames)
+- [`clsx` library on GitHub](https://github.com/lukeed/clsx): A newer version that serves as a faster and smaller drop-in replacement for `classnames`.
+
+## Notes
+
+<!-- Approach, complexity, things learned -->
+
