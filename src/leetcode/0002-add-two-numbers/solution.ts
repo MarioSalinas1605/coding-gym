@@ -8,47 +8,80 @@ export class ListNode {
 	}
 }
 
-export function listNodeValue(list: ListNode | null): string {
-	let currentNode: ListNode | null = list;
-	let result = "";
-
-	while (currentNode !== null) {
-		result += currentNode.val;
-		currentNode = currentNode.next;
-	}
-	return result;
+interface DigitSum {
+	carry: number;
+	digit: number;
 }
 
-export function listNodeMaker(value: string): ListNode | null {
-	const elementsArray = value.split("");
-	let headListNode: ListNode | null = null;
-	let prevListNode: ListNode | null = null;
+export function sumDigits(digit1: number, digit2: number, base = 10): DigitSum {
+	const sum = digit1 + digit2;
 
-	for (const element of elementsArray) {
-		const newNode = new ListNode(Number(element));
-		if (!headListNode) {
-			headListNode = newNode;
-		} else if (prevListNode) {
-			prevListNode.next = newNode;
-		}
-		prevListNode = newNode;
-	}
-	return headListNode;
+	return {
+		carry: Math.floor(sum / base),
+		digit: sum % base,
+	};
 }
 
-export const reverseString = (value: string) =>
-	value.split("").reverse().join("");
+interface addElementToListParams {
+	list: ListNode | null;
+	listTail: ListNode | null;
+	value: number;
+}
+
+function addElementToList({ list, listTail, value }: addElementToListParams) {
+	if (!list) {
+		list = new ListNode(value);
+		listTail = list;
+	} else if (listTail) {
+		const newNode = new ListNode(value);
+		listTail.next = newNode;
+		listTail = listTail.next;
+	}
+	return {
+		list,
+		listTail,
+	};
+}
 
 export function addTwoNumbers(
 	l1: ListNode | null,
 	l2: ListNode | null,
 ): ListNode | null {
-	const l1Value = listNodeValue(l1);
-	const l2Value = listNodeValue(l2);
-	const value1 = reverseString(l1Value);
-	const value2 = reverseString(l2Value);
-	const result = Number(value1) + Number(value2);
-	const reversedResult = reverseString(String(result));
-	const listResult = listNodeMaker(reversedResult);
-	return listResult;
+	let currentL1: ListNode | null | undefined = l1;
+	let currentL2: ListNode | null | undefined = l2;
+	let resultList: ListNode | null = null;
+	let resultTail: ListNode | null = null;
+	let carry = 0;
+
+	while (currentL1?.val !== undefined || currentL2?.val !== undefined) {
+		const val1 = currentL1?.val;
+		const val2 = currentL2?.val;
+
+		const { carry: nextCarry, digit } = sumDigits(
+			val1 ?? 0,
+			(val2 ?? 0) + carry,
+		);
+		carry = nextCarry;
+
+		const { list: listHead, listTail } = addElementToList({
+			list: resultList,
+			listTail: resultTail,
+			value: digit,
+		});
+		resultList = listHead;
+		resultTail = listTail;
+
+		currentL1 = currentL1?.next;
+		currentL2 = currentL2?.next;
+	}
+	if (carry) {
+		const { list: listHead, listTail } = addElementToList({
+			list: resultList,
+			listTail: resultTail,
+			value: carry,
+		});
+		resultList = listHead;
+		resultTail = listTail;
+	}
+	return resultList;
 }
