@@ -8,9 +8,14 @@
  * URL, the platform is detected and the description (plus LeetCode's number
  * and title) is fetched; otherwise it's read from what the user copies in the
  * browser (see scripts/description.ts).
+ *
+ * GreatFrontEnd user-interface questions become a React workspace project
+ * copied from scripts/templates/react-{ts,js} (detected from the URL, or asked
+ * without one); everything else gets a solution file and its tests.
  */
 
 import * as p from "@clack/prompts";
+import rootPackage from "../package.json";
 import {
 	copiedDescription,
 	type FetchedProblem,
@@ -26,14 +31,23 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 	greatfrontend: "GreatFrontEnd",
 };
 
+const KIND_LABELS: Record<Kind, string> = {
+	logic: "Logic (JS function)",
+	ui: "UI (React)",
+};
+
 const NAME_EXAMPLES: Record<Platform, string> = {
 	leetcode: "1. Two Sum",
 	exercism: "Hamming",
 	greatfrontend: "Debounce",
 };
 
+/** logic: a solution function; ui: a React app (GreatFrontEnd only) */
+type Kind = "logic" | "ui";
+
 type Challenge = {
 	platform: Platform;
+	kind: Kind;
 	name: string;
 	url: string;
 	ts: boolean;
@@ -41,6 +55,22 @@ type Challenge = {
 };
 
 const ROOT = `${import.meta.dir}/..`;
+const TEMPLATES = `${import.meta.dir}/templates`;
+
+// Installed with `bun add` so each project starts on the current versions
+const UI_DEPS = ["react", "react-dom"];
+const UI_DEV_DEPS = [
+	"@types/react",
+	"@types/react-dom",
+	"@types/bun",
+	"@testing-library/react",
+	"@testing-library/dom",
+	"@testing-library/user-event",
+	"@happy-dom/global-registrator",
+];
+// …except TypeScript, kept on the root's range so every project type-checks
+// with the same major version
+const TYPESCRIPT = `typescript@${rootPackage.peerDependencies.typescript}`;
 
 const slugify = (s: string) =>
 	s
@@ -78,15 +108,23 @@ function fnNameFor(title: string): string {
 
 async function exists(platform: Platform, slug: string): Promise<boolean> {
 	const dir = `${ROOT}/src/${platform}/${slug}`;
-	return (
-		(await Bun.file(`${dir}/solution.js`).exists()) ||
-		(await Bun.file(`${dir}/solution.ts`).exists())
-	);
+	const files = ["solution.js", "solution.ts", "package.json"];
+	for (const file of files) {
+		if (await Bun.file(`${dir}/${file}`).exists()) return true;
+	}
+	return false;
 }
 
 function platformFromUrl(url: string): Platform | undefined {
 	const host = URL.parse(url)?.hostname ?? "";
 	return PLATFORMS.find((platform) => host.includes(platform));
+}
+
+// https://www.greatfrontend.com/questions/user-interface/todo-list (also under
+// /interviews/study/<plan>/questions/...) vs /questions/javascript/debounce
+function kindFromUrl(url: string): Kind {
+	const path = URL.parse(url)?.pathname ?? "";
+	return path.includes("/questions/user-interface/") ? "ui" : "logic";
 }
 
 /** Title suggested by the URL's last path segment: ".../two-sum/" -> "Two Sum" */
@@ -183,6 +221,9 @@ async function ask(): Promise<Challenge> {
 	if (detected) {
 		platform = detected;
 		p.log.step(`Platform: ${PLATFORM_LABELS[platform]}`);
+		if (platform === "greatfrontend") {
+			p.log.step(`Type: ${KIND_LABELS[kindFromUrl(url)]}`);
+		}
 		const spinner = p.spinner();
 		spinner.start("Fetching the problem description");
 		fetched = await fetchProblem(url, platform);
@@ -199,6 +240,22 @@ async function ask(): Promise<Challenge> {
 			}),
 		);
 	}
+
+	// Only GreatFrontEnd has UI questions: read it from the URL or ask
+	const kind: Kind =
+		platform !== "greatfrontend"
+			? "logic"
+			: url
+				? kindFromUrl(url)
+				: answer(
+						await p.select({
+							message: "Type",
+							options: (["logic", "ui"] as const).map((value) => ({
+								value,
+								label: KIND_LABELS[value],
+							})),
+						}),
+					);
 
 	// LeetCode URLs don't carry the problem number: use the fetched one or ask
 	const number =
@@ -241,15 +298,35 @@ async function ask(): Promise<Challenge> {
 	);
 
 	const problem = fetched?.description ?? (await askProblem(platform));
-	return { platform, name, url, ts: lang === "ts", problem };
+	return { platform, kind, name, url, ts: lang === "ts", problem };
 }
 
-async function create({ platform, name, url, ts, problem }: Challenge) {
-	const ext = ts ? "ts" : "js";
+async function create({ platform, kind, name, url, ts, problem }: Challenge) {
 	const slug = slugFor(name);
 	const { title } = parseName(name);
-	const fnName = fnNameFor(title);
-	const dir = `${ROOT}/src/${platform}/${slug}`;
+	const path = `src/${platform}/${slug}`;
+	const dir = `${ROOT}/${path}`;
+
+	const notes =
+		kind === "ui"
+			? `## Run
+
+\`\`\`bash
+bun test ${path}   # from the repo root, or \`bun test\` in this folder
+cd ${path} && bun dev   # open the printed URL
+\`\`\`
+
+## Notes
+
+<!-- Approach, UX improvements, things learned -->
+`
+			: `## Notes
+
+<!-- Approach, complexity, things learned -->
+
+- Time:
+- Space:
+`;
 
 	await Bun.write(
 		`${dir}/README.md`,
@@ -259,14 +336,18 @@ ${url ? `${url}\n\n` : ""}## Problem
 
 ${problem ?? "<!-- Paste the problem statement here -->"}
 
-## Notes
-
-<!-- Approach, complexity, things learned -->
-
-- Time:
-- Space:
-`,
+${notes}`,
 	);
+
+	if (kind === "ui") await createUi(dir, slug, title, ts);
+	else await createLogic(dir, title, ts);
+
+	return path;
+}
+
+async function createLogic(dir: string, title: string, ts: boolean) {
+	const ext = ts ? "ts" : "js";
+	const fnName = fnNameFor(title);
 
 	await Bun.write(
 		`${dir}/solution.${ext}`,
@@ -289,8 +370,58 @@ describe("${title.replace(/"/g, '\\"')}", () => {
 });
 `,
 	);
+}
 
-	return `src/${platform}/${slug}`;
+/**
+ * A self-contained React project (its own package.json, tsconfig, entry
+ * point and tests). It's a workspace of the root package.json, so its
+ * dependencies install into the root and root `bun test` runs its tests.
+ */
+async function createUi(dir: string, slug: string, title: string, ts: boolean) {
+	const template = `${TEMPLATES}/react-${ts ? "ts" : "js"}`;
+	const fill = (text: string) =>
+		text.replaceAll("{{name}}", slug).replaceAll("{{title}}", title);
+
+	for await (const file of new Bun.Glob("**/*").scan({
+		cwd: template,
+		dot: true,
+	})) {
+		await Bun.write(
+			`${dir}/${file}`,
+			fill(await Bun.file(`${template}/${file}`).text()),
+		);
+	}
+
+	const spinner = p.spinner();
+	spinner.start("Installing React and Testing Library");
+	const failed =
+		(await bunAdd(dir, UI_DEPS)) ??
+		(await bunAdd(dir, ["-d", ...UI_DEV_DEPS, ...(ts ? [TYPESCRIPT] : [])]));
+	if (failed) {
+		spinner.error("Couldn't install the dependencies");
+		p.log.warn(
+			`${failed.trim()}\nInstall them from the challenge folder:\n  bun add ${UI_DEPS.join(" ")}\n  bun add -d ${UI_DEV_DEPS.join(" ")}${ts ? ` ${TYPESCRIPT}` : ""}`,
+		);
+	} else {
+		spinner.stop("Installed React and Testing Library");
+	}
+}
+
+/** `bun add` in `cwd`; returns its output if it failed. */
+async function bunAdd(
+	cwd: string,
+	args: string[],
+): Promise<string | undefined> {
+	const proc = Bun.spawn([process.execPath, "add", ...args], {
+		cwd,
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	const [code, stderr] = await Promise.all([
+		proc.exited,
+		new Response(proc.stderr).text(),
+	]);
+	return code === 0 ? undefined : stderr || `bun add exited with ${code}`;
 }
 
 if (!process.stdin.isTTY) {
@@ -302,5 +433,6 @@ const challenge = await ask();
 const path = await create(challenge);
 p.outro(
 	`Created ${path}/${challenge.problem ? "" : " (paste the description into README.md later)"}\n` +
-		`   Next: bun test --watch ${path}`,
+		`   Next: bun test --watch ${path}` +
+		(challenge.kind === "ui" ? `\n         cd ${path} && bun dev` : ""),
 );

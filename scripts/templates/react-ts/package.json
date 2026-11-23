@@ -1,0 +1,10 @@
+{
+	"name": "{{name}}",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun ./index.html",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	}
+}

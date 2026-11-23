@@ -25,5 +25,15 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false
-	}
+	},
+
+	// UI challenges are workspace projects with their own tsconfig (DOM + JSX),
+	// checked by `bun run typecheck` through `bun run --workspaces`
+	"exclude": [
+		"node_modules",
+		"scripts/templates",
+		"src/**/*.tsx",
+		"src/**/*.jsx",
+		"src/**/happydom.*"
+	]
 }

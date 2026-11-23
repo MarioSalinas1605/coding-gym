@@ -1,0 +1,5 @@
+[test]
+# DOM for the UI challenges' component tests (see scripts/happydom.ts)
+preload = ["./scripts/happydom.ts"]
+# UI project templates copied by `bun new`, not tests to run
+pathIgnorePatterns = ["scripts/templates/**"]
