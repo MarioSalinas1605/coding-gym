@@ -27,6 +27,7 @@ This repo holds solutions to programming challenges from LeetCode, Exercism and 
 - Keep solutions dependency-free (standard library only), as on the platforms. UI challenges may use React (and their test tooling), nothing else.
 - Run a single challenge's tests with `bun test src/<platform>/<slug>` (works for UI challenges too).
 - Lint/format with Biome: `bun run format:fix`. Type-check TS solutions with `bun run typecheck` (the root, then each UI project's own tsconfig via `bun run --workspaces`).
+- Run every CI check at once with `bun verify`: format check, typecheck and all tests in parallel, printing only failures and a summary (the same checks CI runs as separate steps).
 
 ## Commits
 

@@ -11,7 +11,8 @@
 		"test:watch": "bun test --watch",
 		"typecheck": "tsc --noEmit && bun run --workspaces --if-present typecheck",
 		"format": "biome check",
-		"format:fix": "biome check --write"
+		"format:fix": "biome check --write",
+		"verify": "bun scripts/verify.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",
